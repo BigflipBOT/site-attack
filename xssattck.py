@@ -1,5 +1,5 @@
 import requests
-from urllib.parse import urlencode, quote_plus
+from urllib.parse import quote_plus
 import sys
 
 # List of XSS payloads to test
@@ -9,30 +9,18 @@ xss_payloads = [
     "<svg/onload=alert('XSS')>",
 ]
 
-# Base URL of the web application (replace with the actual URL)
-# base_url = "http://localhost/vulnerabilities/xss_r/"
-
-# cookies = {
-#     "PHPSESSID": "r0gb7ua840v3i1jmun8o2t2re3",
-# }
-
 def url_construct(base_url, payload):
+    # Encode the payload for safe inclusion in the URL
     enc_payload = quote_plus(payload, safe='')
-    url = base_url+"?"+"name="+enc_payload+"#"
-    # print(url)
+    # Construct the full URL with the encoded payload
+    url = base_url + "?" + "name=" + enc_payload + "#"
     return url
 
 def test_reflected_xss(session, url, payload, cookies):
-    # params = {"name": payload}
-    # full_url = f"{url}?{urlencode(params)}#"
+    # Construct the full URL with the payload
     full_url = url_construct(url, payload)
-    # print(urlencode(params))
-    # print(url)
-    # print(payload)
-    # print(full_url)
+    # Send a GET request with the constructed URL and cookies
     response = session.get(full_url, cookies=cookies)
-    # print(str(response.text))
-    # exit(0)
     
     # Check if the payload is reflected in the response
     if payload in response.text:
@@ -41,17 +29,19 @@ def test_reflected_xss(session, url, payload, cookies):
         print(f"No reflected XSS found with payload: {payload}")
 
 def main():
+    # Get the base URL and session ID from command line arguments
     base_url = sys.argv[1]
     cookies = {
         "PHPSESSID": sys.argv[2],
     }
+    # Create a session object
     session = requests.Session()
 
+    # Test each XSS payload
     for payload in xss_payloads:
-        # print(f"Testing payload: {payload}")
-        test_reflected_xss(session, f'{base_url}', payload, cookies)
+        test_reflected_xss(session, base_url, payload, cookies)
 
 if __name__ == "__main__":
+    # Run the main function if the script is executed directly
     main()
-    # url_construct("http://localhost/vulnerabilities/xss_r/", xss_payloads[0])
-    exit(0)
+    exit(0)  # Exit the program with success code 0
